@@ -39,7 +39,9 @@ define function getPriorityTier[JavaScript] return string {
 	        "/register/{ClientId}", "/", "/token", "/authorize", "/revoke", "/userinfo", "/introspect", "/jwks", "/.well-known/openid-configuration", "/par"];
 	var lowPriorityList = ["/banking/accounts/{accountId}", "/banking/accounts/{accountId}/balance", "/banking/accounts/balances", "/banking/accounts/{accountId}/transactions",
 	        "/banking/accounts/{accountId}/transactions/{transactionId}", "/banking/payees", "/banking/payees/{payeeId}", "/banking/accounts/{accountId}/direct-debits",
-	        "/banking/accounts/{accountId}/payments/scheduled", "/banking/payments/scheduled"];
+	        "/banking/accounts/{accountId}/payments/scheduled", "/banking/payments/scheduled",
+	        "/banking/accounts/{accountId}/payments/plans",
+	        "/banking/accounts/payments/plans"];
 	var unattendedList = [ "/register/metadata", "/metrics"];
 	var largePayloadList = ["/banking/accounts/direct-debits"];
 
@@ -95,7 +97,8 @@ define function getAspect[JavaScript] return string {
             '/banking/accounts/{accountId}/transactions', '/banking/accounts/{accountId}/transactions/{transactionId}',
             '/banking/payees', '/banking/payees/{payeeId}', '/banking/accounts/{accountId}/direct-debits',
             '/banking/accounts/{accountId}/payments/scheduled', '/banking/payments/scheduled', '/register/metadata',
-            '/metrics', '/banking/accounts/direct-debits'];
+            '/metrics', '/banking/accounts/direct-debits',
+            '/banking/accounts/{accountId}/payments/plans', '/banking/accounts/payments/plans'];
 
     if (unauthenticatedList.indexOf(electedResource) > -1) {
         aspect = 'unauthenticated';

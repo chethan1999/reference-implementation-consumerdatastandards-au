@@ -52,7 +52,8 @@ public class IdPermanenceConstants {
     // response URLs
     public static final ImmutableList<String> RESOURCE_LIST_RES_URLS = ImmutableList.of(
             "/banking/accounts", "/banking/accounts/balances", "/banking/accounts/{accountId}/transactions",
-            "/banking/accounts/{accountId}/direct-debits", "/banking/accounts/direct-debits", "/banking/payees");
+            "/banking/accounts/{accountId}/direct-debits", "/banking/accounts/direct-debits", "/banking/payees",
+            "/banking/accounts/payments/plans");
 
     public static final ImmutableList<String> SINGLE_RESOURCE_RES_URLS = ImmutableList.of(
             "/banking/accounts/{accountId}/balance", "/banking/accounts/{accountId}",
@@ -65,7 +66,7 @@ public class IdPermanenceConstants {
             "/banking/accounts/{accountId}/balance", "/banking/accounts/{accountId}",
             "/banking/accounts/{accountId}/transactions", "/banking/accounts/{accountId}/transactions/{transactionId}",
             "/banking/accounts/{accountId}/direct-debits", "/banking/accounts/{accountId}/payments/scheduled",
-            "/banking/payees/{payeeId}");
+            "/banking/payees/{payeeId}", "/banking/accounts/{accountId}/payments/plans");
 
     // regex patterns
     public static final String DECRYPTED_RESOURCE_ID_PATTERN = "^[^:]*:+[^:]*:[^:]*$";

@@ -37,7 +37,8 @@ define function getDataCluster[JavaScript] return string {
 	var bankAccountsReadList = ['/banking/accounts', '/banking/accounts/balances', '/banking/accounts/{accountId}', '/banking/accounts/{accountId}/balance'];
 	var bankTransactionsReadList = ['/banking/accounts/{accountId}/transactions', '/banking/accounts/{accountId}/transactions/{transactionId}'];
 	var bankPayeesReadList = ['/banking/payees', '/banking/payees/{payeeId}'];
-	var bankRegularPaymentsReadList = ['/banking/accounts/direct-debits', '/banking/accounts/{accountId}/direct-debits', '/banking/accounts/{accountId}/payments/scheduled', '/banking/payments/scheduled'];
+	var bankRegularPaymentsReadList = ['/banking/accounts/direct-debits', '/banking/accounts/{accountId}/direct-debits', '/banking/accounts/{accountId}/payments/scheduled', '/banking/payments/scheduled',
+	                                    '/banking/accounts/{accountId}/payments/plans', '/banking/accounts/payments/plans'];
 	var bankCommonCustomerReadList = ['/common/customer', '/common/customer/detail'];
 	var profileList = ['/userinfo'];
 

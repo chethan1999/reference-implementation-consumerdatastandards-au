@@ -47,9 +47,9 @@
                     <filesets>
                         <fileset>
                             <directory>${project.basedir}/carbon-home/repository/components/lib</directory>
-                            <excludes>
+                            <!-- excludes>
                                 <exclude>**/quartz-jobs-2.3.2.jar</exclude>
-                            </excludes>
+                            </excludes -->
                         </fileset>
                         <fileset>
                             <directory>${project.basedir}/carbon-home/repository/deployment/server/webapps</directory>
