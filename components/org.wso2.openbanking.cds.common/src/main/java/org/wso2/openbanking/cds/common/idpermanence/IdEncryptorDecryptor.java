@@ -42,7 +42,6 @@ public class IdEncryptorDecryptor {
     private static final Log log = LogFactory.getLog(IdEncryptorDecryptor.class);
 
     private static SecretKeySpec secretKey;
-    private static byte[] key;
 
     /**
      * Set resource ID encryption/decryption key.
@@ -52,11 +51,11 @@ public class IdEncryptorDecryptor {
     public static void setKey(String secret) {
         MessageDigest sha = null;
         try {
-            key = secret.getBytes(StandardCharsets.UTF_8);
+            byte[] key = secret.getBytes(StandardCharsets.UTF_8);
             sha = MessageDigest.getInstance("SHA-512");
             key = sha.digest(key);
-            key = Arrays.copyOf(key, 16);
-            secretKey = new SecretKeySpec(key, "AES");
+            byte[] truncatedKey = Arrays.copyOf(key, 16);
+            secretKey = new SecretKeySpec(truncatedKey, "AES");
         } catch (NoSuchAlgorithmException e) {
             log.error("Error while setting the encryption key", e);
         }
