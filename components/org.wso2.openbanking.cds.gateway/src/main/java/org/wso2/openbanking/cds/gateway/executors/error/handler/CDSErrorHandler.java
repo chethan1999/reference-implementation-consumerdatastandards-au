@@ -26,6 +26,7 @@ import com.wso2.openbanking.accelerator.gateway.executor.model.OBAPIRequestConte
 import com.wso2.openbanking.accelerator.gateway.executor.model.OBAPIResponseContext;
 import com.wso2.openbanking.accelerator.gateway.executor.model.OpenBankingExecutorError;
 import com.wso2.openbanking.accelerator.gateway.util.GatewayConstants;
+import net.minidev.json.JSONArray;
 import net.minidev.json.JSONObject;
 import net.minidev.json.parser.JSONParser;
 import net.minidev.json.parser.ParseException;
@@ -178,14 +179,53 @@ public class CDSErrorHandler implements OpenBankingGatewayExecutor {
 
     protected void handleResponseError(OBAPIResponseContext obapiResponseContext) {
 
+        // Promote backend 4xx/5xx responses to error state so STATUS_MESSAGE is captured in analytics.
+        // Without this, isError() stays false for backend errors that originate outside the executor chain
+        // (e.g. 422 Invalid Page/Invalid Accounts from the resource server), causing STATUS_MESSAGE to remain NULL.
+        if (!obapiResponseContext.isError() && obapiResponseContext.getStatusCode() >= HttpStatus.SC_BAD_REQUEST) {
+            String payload = obapiResponseContext.getResponsePayload();
+            String httpStatus = String.valueOf(obapiResponseContext.getStatusCode());
+            ArrayList<OpenBankingExecutorError> promotedErrors = new ArrayList<>();
+
+            if (payload != null) {
+                try {
+                    JSONObject backendJson = (JSONObject) new JSONParser(JSONParser.MODE_PERMISSIVE).parse(payload);
+                    JSONArray errorArray = (JSONArray) backendJson.get(ErrorConstants.ERRORS);
+                    if (errorArray != null && !errorArray.isEmpty()) {
+                        for (Object item : errorArray) {
+                            JSONObject errorItem = (JSONObject) item;
+                            String errorCode  = errorItem.getAsString(ErrorConstants.CODE);
+                            String errorTitle = errorItem.getAsString(ErrorConstants.TITLE);
+                            // Pass the inner error JSON as message so getErrorJson can extract the detail field.
+                            promotedErrors.add(new OpenBankingExecutorError(
+                                    errorCode, errorTitle, errorItem.toString(), httpStatus));
+                        }
+                    }
+                } catch (ParseException | ClassCastException e) {
+                    log.debug("Could not parse backend error payload for analytics enrichment", e);
+                }
+            }
+
+            if (promotedErrors.isEmpty()) {
+                // Fallback when the backend payload is absent or unparseable.
+                promotedErrors.add(new OpenBankingExecutorError(
+                        httpStatus, "Backend Error", "Backend Error", httpStatus));
+            }
+            obapiResponseContext.setError(true);
+            obapiResponseContext.setErrors(promotedErrors);
+        }
+
         if (!obapiResponseContext.isError()) {
             return;
         }
+
         ArrayList<OpenBankingExecutorError> errors = obapiResponseContext.getErrors();
         HashSet<String> statusCodes = new HashSet<>();
+        HashMap<String, String> statusMessages = new HashMap<>();
 
         for (OpenBankingExecutorError error : errors) {
             statusCodes.add(error.getHttpStatusCode());
+            statusMessages.put(error.getHttpStatusCode(), error.getCode());
         }
 
         if (obapiResponseContext.getMsgInfo().getResource().contains("/register")) {
@@ -219,6 +259,11 @@ public class CDSErrorHandler implements OpenBankingGatewayExecutor {
         // Add error data to analytics map
         Map<String, Object> analyticsData = obapiResponseContext.getAnalyticsData();
         analyticsData.put(STATUS_CODE, statusCode);
+
+        String statusMessage = statusMessages.get(String.valueOf(statusCode));
+        if (statusMessage != null) {
+            analyticsData.put(STATUS_MESSAGE, statusMessage);
+        }
         analyticsData.put(RESPONSE_PAYLOAD_SIZE, (long) obapiResponseContext.getModifiedPayload().length());
         obapiResponseContext.setAnalyticsData(analyticsData);
 

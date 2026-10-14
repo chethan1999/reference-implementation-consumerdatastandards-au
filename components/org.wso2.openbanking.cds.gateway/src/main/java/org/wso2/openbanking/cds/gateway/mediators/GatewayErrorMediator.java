@@ -244,11 +244,32 @@ public class GatewayErrorMediator extends AbstractMediator {
             }
         }
 
+        // Derive statusMessage from the APIM error code so STATUS_MESSAGE is not NULL in analytics.
+        String statusMessage = null;
+        Object errorCodeObj = messageContext.getProperty(GatewayConstants.ERROR_CODE);
+        if (errorCodeObj != null) {
+            int errorCode = (int) errorCodeObj;
+            String errorCodeStr = Integer.toString(errorCode);
+            if (errorCodeStr.startsWith("9008")) {
+                statusMessage = ErrorConstants.AUErrorEnum.EXPECTED_GENERAL_ERROR.getCode();
+            } else if (errorCode == GatewayConstants.INVALID_SCOPE) {
+                statusMessage = "insufficient_scope";
+            } else if (errorCode == GatewayConstants.API_AUTH_FORBIDDEN) {
+                statusMessage = ErrorConstants.AUErrorEnum.EXPECTED_GENERAL_ERROR.getCode();
+            } else if (errorCode == GatewayConstants.API_AUTH_GENERAL_ERROR) {
+                statusMessage = ErrorConstants.AUErrorEnum.UNEXPECTED_ERROR.getCode();
+            } else if (errorCodeStr.startsWith("9")) {
+                // Covers invalid/missing client credentials (900901, 900902, etc.)
+                statusMessage = ErrorConstants.AUErrorEnum.CLIENT_AUTH_FAILED.getCode();
+            }
+        }
+
         requestData.put("consentId", null);
         requestData.put("consumerId", consumerId);
         requestData.put("clientId", clientId);
         requestData.put("userAgent", userAgent);
         requestData.put("statusCode", statusCode);
+        requestData.put("statusMessage", statusMessage);
         requestData.put("httpMethod", httpMethod);
         requestData.put("responsePayloadSize", payloadSize);
         requestData.put("electedResource", electedResource);
