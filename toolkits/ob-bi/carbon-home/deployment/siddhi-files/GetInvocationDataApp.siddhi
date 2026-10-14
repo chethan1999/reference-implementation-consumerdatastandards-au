@@ -51,8 +51,9 @@ define function getProductEndpointCDRRuleViolations[JavaScript] return object {
     var invalidVersion = data[4];
     var invalidPage = data[5];
     var tooManyRequests = data[6];
+    var forbidden = data[7];
 
-    var obj = { UNSUPPORTED_VERSION: unsupportedVersion, INVALID_FIELD: invalidField, INVALID_DATE: invalidDate, INVALID_PAGE_SIZE: invalidPageSize, INVALID_VERSION: invalidVersion, INVALID_PAGE: invalidPage, TOO_MANY_REQUESTS: tooManyRequests };
+    var obj = { UNSUPPORTED_VERSION: unsupportedVersion, INVALID_FIELD: invalidField, INVALID_DATE: invalidDate, INVALID_PAGE_SIZE: invalidPageSize, INVALID_VERSION: invalidVersion, INVALID_PAGE: invalidPage, TOO_MANY_REQUESTS: tooManyRequests, FORBIDDEN: forbidden };
     return obj;
 };
 
@@ -74,8 +75,9 @@ define function getCDRRuleViolations[JavaScript] return object {
     var invalidAccount422 = data[14];
     var invalidResource404 = data[15];
     var invalidResource422 = data[16];
+    var forbidden = data[17];
 
-    var obj = { INVALID_ADR_STATUS: invalidAdrStatus, INVALID_ADR_SOFTWARE_PRODUCT_STATUS: invalidSoftwareProductStatus, INVALID_CONSENT_STATUS: invalidConsentStatus, CONSENT_IS_REVOKED: consentIsRevoked, UNSUPPORTED_VERSION: unsupportedVersion, INVALID_FIELD: invalidField, INVALID_DATE: invalidDate, INVALID_PAGE_SIZE: invalidPageSize, INVALID_VERSION: invalidVersion, INVALID_PAGE: invalidPage, TOO_MANY_REQUESTS: tooManyRequests, UNAVAILABLE_BANKING_ACCOUNT_404: unavailableAccount404, UNAVAILABLE_BANKING_ACCOUNT_422: unavailableAccount422, INVALID_BANKING_ACCOUNT_404: invalidAccount404, INVALID_BANKING_ACCOUNT_422: invalidAccount422, INVALID_RESOURCE_404: invalidResource404, INVALID_RESOURCE_422: invalidResource422};
+    var obj = { INVALID_ADR_STATUS: invalidAdrStatus, INVALID_ADR_SOFTWARE_PRODUCT_STATUS: invalidSoftwareProductStatus, INVALID_CONSENT_STATUS: invalidConsentStatus, CONSENT_IS_REVOKED: consentIsRevoked, UNSUPPORTED_VERSION: unsupportedVersion, INVALID_FIELD: invalidField, INVALID_DATE: invalidDate, INVALID_PAGE_SIZE: invalidPageSize, INVALID_VERSION: invalidVersion, INVALID_PAGE: invalidPage, TOO_MANY_REQUESTS: tooManyRequests, UNAVAILABLE_BANKING_ACCOUNT_404: unavailableAccount404, UNAVAILABLE_BANKING_ACCOUNT_422: unavailableAccount422, INVALID_BANKING_ACCOUNT_404: invalidAccount404, INVALID_BANKING_ACCOUNT_422: invalidAccount422, INVALID_RESOURCE_404: invalidResource404, INVALID_RESOURCE_422: invalidResource422, FORBIDDEN: forbidden};
     return obj;
 };
 
@@ -123,6 +125,9 @@ from StatusCheckStream#rdbms:query('OB_REPORTING_DB',
     ERR_429_P long,
     ERR_429_C long,
 
+    ERR_403_P long,
+    ERR_403_C long,
+
     UN_ACC_404 long,
     UN_ACC_422 long,
     INV_ACC_404 long,
@@ -165,6 +170,9 @@ from StatusCheckStream#rdbms:query('OB_REPORTING_DB',
         COUNT(CASE WHEN STATUS_CODE=429 AND ELECTED_RESOURCE LIKE '%products%' THEN 1 END),
         COUNT(CASE WHEN STATUS_CODE=429 AND ELECTED_RESOURCE LIKE '%banking%' AND ELECTED_RESOURCE NOT LIKE '%products%' THEN 1 END),
 
+        COUNT(CASE WHEN STATUS_CODE=403 AND ELECTED_RESOURCE LIKE '%products%' THEN 1 END),
+        COUNT(CASE WHEN STATUS_CODE=403 AND ELECTED_RESOURCE LIKE '%banking%' AND ELECTED_RESOURCE NOT LIKE '%products%' THEN 1 END),
+
         COUNT(CASE WHEN STATUS_CODE=404 AND STATUS_MESSAGE = 'urn:au-cds:error:cds-banking:Authorisation/UnavailableBankingAccount' THEN 1 END),
         COUNT(CASE WHEN STATUS_CODE=422 AND STATUS_MESSAGE = 'urn:au-cds:error:cds-banking:Authorisation/UnavailableBankingAccount' THEN 1 END),
         COUNT(CASE WHEN STATUS_CODE=404 AND STATUS_MESSAGE = 'urn:au-cds:error:cds-banking:Authorisation/InvalidBankingAccount' THEN 1 END),
@@ -180,6 +188,6 @@ select
     MESSAGE_ID,
     getBankingAPIInvocationsObject(BANKING_CALLS, PRODUCT_CALLS, CONSUMER_CALLS) as RECEIVED_REQUESTS,
     getErrorCountsObject(ERR_429, ERR_403, ERR_400, ERR_401, ERR_404, ERR_406, ERR_422) as FAULTY_INVOCATIONS,
-    getProductEndpointCDRRuleViolations(UNSUP_VER_P, INV_FLD_P, INV_DATE_P, INV_PAGE_SZ_P, INV_VER_P, INV_PAGE_P, ERR_429_P) as PRODUCT_ENDPOINT_CDR_RULE_VIOLATIONS,
-    getCDRRuleViolations(ADR_NOT_ACTIVE, ADR_SOFT_INV, CONSENT_INV, CONSENT_REV, UNSUP_VER_C, INV_FLD_C, INV_DATE_C, INV_PAGE_SZ_C, INV_VER_C, INV_PAGE_C, ERR_429_C, UN_ACC_404, UN_ACC_422, INV_ACC_404, INV_ACC_422, INV_RES_404, INV_RES_422) as CONSUMER_ENDPOINT_CDR_RULE_VIOLATIONS
+    getProductEndpointCDRRuleViolations(UNSUP_VER_P, INV_FLD_P, INV_DATE_P, INV_PAGE_SZ_P, INV_VER_P, INV_PAGE_P, ERR_429_P, ERR_403_P) as PRODUCT_ENDPOINT_CDR_RULE_VIOLATIONS,
+    getCDRRuleViolations(ADR_NOT_ACTIVE, ADR_SOFT_INV, CONSENT_INV, CONSENT_REV, UNSUP_VER_C, INV_FLD_C, INV_DATE_C, INV_PAGE_SZ_C, INV_VER_C, INV_PAGE_C, ERR_429_C, UN_ACC_404, UN_ACC_422, INV_ACC_404, INV_ACC_422, INV_RES_404, INV_RES_422, ERR_403_C) as CONSUMER_ENDPOINT_CDR_RULE_VIOLATIONS
 insert into OutputStream;
