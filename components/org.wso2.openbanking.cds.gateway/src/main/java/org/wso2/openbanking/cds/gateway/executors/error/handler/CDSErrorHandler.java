@@ -182,7 +182,11 @@ public class CDSErrorHandler implements OpenBankingGatewayExecutor {
         // Promote backend 4xx/5xx responses to error state so STATUS_MESSAGE is captured in analytics.
         // Without this, isError() stays false for backend errors that originate outside the executor chain
         // (e.g. 422 Invalid Page/Invalid Accounts from the resource server), causing STATUS_MESSAGE to remain NULL.
-        if (!obapiResponseContext.isError() && obapiResponseContext.getStatusCode() >= HttpStatus.SC_BAD_REQUEST) {
+
+        String resource = obapiResponseContext.getMsgInfo().getResource();
+        boolean isDcrEndpoint = (resource != null && resource.contains("/register"));
+
+        if (!obapiResponseContext.isError() && obapiResponseContext.getStatusCode() >= HttpStatus.SC_BAD_REQUEST && !isDcrEndpoint) {
             String payload = obapiResponseContext.getResponsePayload();
             String httpStatus = String.valueOf(obapiResponseContext.getStatusCode());
             ArrayList<OpenBankingExecutorError> promotedErrors = new ArrayList<>();
